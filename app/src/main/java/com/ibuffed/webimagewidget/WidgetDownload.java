@@ -26,6 +26,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.UnknownHostException;
 
+
 public class WidgetDownload
 {
     private static String getUserAgent(Context context)
