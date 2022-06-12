@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.WorkerThread;
@@ -127,6 +128,12 @@ public class WidgetDownload
                             .putExtra(WidgetProvider.EXTRA_TOAST_TEXT, toastText)
                             .setAction(WidgetProvider.APPWIDGET_TOAST)
             );
+        }
+
+        if (success) {
+            Log.i("WidgetDownload", "widget #" + appWidgetId + " updated");
+        } else {
+            Log.e("WidgetDownload", "widget #" + appWidgetId + " update failed: " + msg);
         }
     }
 }

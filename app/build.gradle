@@ -6,9 +6,8 @@ android {
         applicationId 'com.ibuffed.webimagewidget'
         minSdkVersion 18
         targetSdkVersion 32
-        versionCode 6
-        versionName '2.0'
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        versionCode 7
+        versionName '2.1'
     }
     buildTypes {
         release {
