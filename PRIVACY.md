@@ -47,7 +47,7 @@ In order to ensure an optimal security, you shall regularly install any Applicat
 I also advise you to regularly check for any Android OS update(s) that could be available and to enable automatic updates.
 
 ## Changes
-This Privacy Policy may be updated from time to time for any reason. I will notify you of any changes to our Privacy Policy by posting the new Privacy Policy at [PRIVACY.md](https://github.com/004helix/RemoteImageWidget/PRIVACY.md) and update the "Last updated" date at the top of this Privacy Policy.
+This Privacy Policy may be updated from time to time for any reason. I will notify you of any changes to our Privacy Policy by posting the new Privacy Policy at [PRIVACY.md](https://github.com/004helix/RemoteImageWidget/blob/master/PRIVACY.md) and update the "Last updated" date at the top of this Privacy Policy.
 
 Please be aware that, although I endeavor provide reasonable security for information I process and maintain, no security system can prevent all potential security breaches (e.g., a zero-day attack targeting mobile Operating System – OS).
 
