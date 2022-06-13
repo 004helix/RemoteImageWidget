@@ -7,21 +7,29 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.util.Objects;
 
-class WidgetOptions
+
+public class WidgetOptions
 {
-    final int appWidgetId;
-    public String url;
-    public boolean scaleImage;
-    public boolean preserveAspectRatio;
+    private final int appWidgetId;
+    private String url;
+    private int interval;
+    private boolean wifi;
+    private boolean scaleImage;
+    private boolean preserveAspectRatio;
 
     WidgetOptions(Context context, int appWidgetId)
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         url = prefs.getString("url." + appWidgetId, "");
+        interval = Integer.parseInt(
+                Objects.requireNonNull(prefs.getString("interval." + appWidgetId, "-1"))
+        );
         scaleImage = prefs.getBoolean("scale." + appWidgetId, true);
         preserveAspectRatio = prefs.getBoolean("aspect." + appWidgetId, true);
+        wifi = prefs.getBoolean("wifi." + appWidgetId, false);
         this.appWidgetId = appWidgetId;
     }
 
@@ -38,6 +46,11 @@ class WidgetOptions
         }
     }
 
+    public int getAppWidgetId()
+    {
+        return appWidgetId;
+    }
+
     public String getUrl()
     {
         return url;
@@ -49,9 +62,26 @@ class WidgetOptions
         return this;
     }
 
-    public boolean getScaleImage()
+    public int getInterval()
     {
-        return scaleImage;
+        return interval;
+    }
+
+    public WidgetOptions setInterval(int interval)
+    {
+        this.interval = interval;
+        return this;
+    }
+
+    public boolean getWifi()
+    {
+        return wifi;
+    }
+
+    public WidgetOptions setWifi(boolean wifi)
+    {
+        this.wifi = wifi;
+        return this;
     }
 
     public WidgetOptions setScaleImage(boolean scaleImage)
@@ -60,19 +90,9 @@ class WidgetOptions
         return this;
     }
 
-    public boolean getPreserveAspectRatio()
-    {
-        return preserveAspectRatio;
-    }
-
     public WidgetOptions setPreserveAspectRatio(boolean preserveAspectRatio)
     {
         this.preserveAspectRatio = preserveAspectRatio;
         return this;
-    }
-
-    public int getAppWidgetId()
-    {
-        return appWidgetId;
     }
 }

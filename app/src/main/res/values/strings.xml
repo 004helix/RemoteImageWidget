@@ -24,6 +24,7 @@
     <string name="settings_title_name">Widget Name</string>
     <string name="settings_default_name">Widget #</string>
     <string name="settings_title_url">Image URL</string>
+    <string name="settings_default_url">http://</string>
     <string name="settings_title_interval">Refresh Interval</string>
     <string-array name="settings_interval_titles">
         <item>Never</item>

@@ -12,11 +12,14 @@ import android.preference.PreferenceManager;
 import android.os.Bundle;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.PreferenceViewHolder;
+
+import java.util.Objects;
 
 
 public class WidgetPreferenceActivity extends PreferenceFragmentCompat
@@ -27,9 +30,11 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
         String backStateName = this.getClass().getName();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
+        assert context != null;
+
         Preference widget = new Preference(context) {
             @Override
-            public void onBindViewHolder(final PreferenceViewHolder holder) {
+            public void onBindViewHolder(@NonNull final PreferenceViewHolder holder) {
                 super.onBindViewHolder(holder);
                 View itemView = holder.itemView;
 
@@ -65,18 +70,18 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
             }
         };
 
-        widget.setIcon(R.drawable.ic_widgets_black_24dp);
+        widget.setIcon(R.drawable.ic_widgets_24dp);
         widget.setTitle(
                 WidgetUtil.getDisplayName(
                         context,
-                        prefs.getString("name." + appWidgetId, ""),
+                        Objects.requireNonNull(prefs.getString("name." + appWidgetId, "")),
                         appWidgetId
                 )
         );
         widget.setSummary(
                 WidgetUtil.getDisplayURL(
                         context,
-                        prefs.getString("url." + appWidgetId, "")
+                        Objects.requireNonNull(prefs.getString("url." + appWidgetId, ""))
                 )
         );
 
@@ -87,6 +92,9 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
     {
         Context context = getContext();
         Activity activity = getActivity();
+
+        assert context != null;
+        assert activity != null;
 
         // Create new screen
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
@@ -104,7 +112,10 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
     {
         // Create new PreferenceScreen
         Context context = getContext();
+
+        assert context != null;
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
+
         setPreferenceScreen(screen);
     }
 

@@ -25,10 +25,9 @@ import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreference;
 
+import java.util.Objects;
 
-/**
- * This fragment shows widget settings.
- */
+
 public class WidgetPreferenceFragment extends PreferenceFragmentCompat
 {
     public static final String INITIAL = "initial";
@@ -41,6 +40,12 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         // Create new PreferenceScreen
         Context context = getContext();
         Activity activity = getActivity();
+        Bundle arguments = getArguments();
+
+        assert context != null;
+        assert activity != null;
+        assert arguments != null;
+
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
         setPreferenceScreen(screen);
 
@@ -48,8 +53,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         // Get appWidgetId and initial status from arguments
-        appWidgetId = getArguments().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
-        initial = getArguments().getBoolean(INITIAL, false);
+        appWidgetId = arguments.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
+        initial = arguments.getBoolean(INITIAL, false);
 
         // Set title
         activity.setTitle(context.getResources().getString(R.string.activity_widget) + appWidgetId);
@@ -63,11 +68,15 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
             editText.setMaxLines(1);
             editText.setSingleLine(true);
         });
-        name.setIcon(R.drawable.ic_title_black_24dp);
+        name.setIcon(R.drawable.ic_title_24dp);
         name.setOnPreferenceChangeListener(onPrefChange);
-        updatePrefSummary(name, WidgetUtil.getDisplayName(
-                context, prefs.getString(name.getKey(), ""), appWidgetId
-        ));
+        updatePrefSummary(name,
+                WidgetUtil.getDisplayName(
+                        context,
+                        Objects.requireNonNull(prefs.getString(name.getKey(), "")),
+                        appWidgetId
+                )
+        );
         screen.addPreference(name);
 
         // Image URL
@@ -79,11 +88,14 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
             editText.setMaxLines(1);
             editText.setSingleLine(true);
         });
-        url.setIcon(R.drawable.ic_image_black_24dp);
+        url.setIcon(R.drawable.ic_image_24dp);
         url.setOnPreferenceChangeListener(onPrefChange);
-        updatePrefSummary(url, WidgetUtil.getDisplayURL(
-                context, prefs.getString(url.getKey(), "")
-        ));
+        updatePrefSummary(url,
+                WidgetUtil.getDisplayURL(
+                        context,
+                        Objects.requireNonNull(prefs.getString(url.getKey(), ""))
+                )
+        );
         screen.addPreference(url);
 
         // Refresh interval
@@ -92,9 +104,11 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         interval.setTitle(R.string.settings_title_interval);
         interval.setEntries(R.array.settings_interval_titles);
         interval.setEntryValues(R.array.settings_interval_values);
-        interval.setIcon(R.drawable.ic_sync_black_24dp);
+        interval.setIcon(R.drawable.ic_sync_24dp);
         interval.setOnPreferenceChangeListener(onPrefChange);
-        updatePrefSummary(interval, prefs.getString(interval.getKey(), "-1"));
+        updatePrefSummary(interval,
+                Objects.requireNonNull(prefs.getString(interval.getKey(), "-1"))
+        );
         screen.addPreference(interval);
 
         // Update over WiFi only
@@ -102,7 +116,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         wifi.setKey("wifi." + appWidgetId);
         wifi.setTitle(R.string.settings_title_wifi);
         wifi.setDefaultValue(false);
-        wifi.setIcon(R.drawable.ic_wifi_black_24dp);
+        wifi.setIcon(R.drawable.ic_wifi_24dp);
+        wifi.setOnPreferenceChangeListener(onPrefChange);
         screen.addPreference(wifi);
 
         // Scale image
@@ -110,7 +125,7 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         scale.setKey("scale." + appWidgetId);
         scale.setTitle(R.string.settings_title_scale);
         scale.setDefaultValue(true);
-        scale.setIcon(R.drawable.ic_scale_black_24dp);
+        scale.setIcon(R.drawable.ic_scale_24dp);
         scale.setOnPreferenceChangeListener(onPrefChange);
         screen.addPreference(scale);
 
@@ -119,7 +134,7 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         aspect.setKey("aspect." + appWidgetId);
         aspect.setTitle(R.string.settings_title_aspect);
         aspect.setDefaultValue(true);
-        aspect.setIcon(R.drawable.ic_aspect_black_24dp);
+        aspect.setIcon(R.drawable.ic_aspect_24dp);
         aspect.setOnPreferenceChangeListener(onPrefChange);
         screen.addPreference(aspect);
 
@@ -135,6 +150,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         LinearLayout view = (LinearLayout) super.onCreateView(inflater,
                 container, savedInstanceState);
 
+        assert view != null;
+
         if (!initial) {
             return view;
         }
@@ -143,6 +160,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         button.setText(R.string.activity_create_button);
         button.setOnClickListener(v -> {
             Activity activity = getActivity();
+            assert activity != null;
+
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 
             Intent resultValue = new Intent();
@@ -184,52 +203,77 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
             onPrefChange = new Preference.OnPreferenceChangeListener()
     {
         @Override
-        public boolean onPreferenceChange(Preference pref, Object value) {
-            SharedPreferences prefs = PreferenceManager
-                    .getDefaultSharedPreferences(pref.getContext());
+        public boolean onPreferenceChange(Preference pref, Object value)
+        {
+            Context context = pref.getContext();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            WidgetOptions options = new WidgetOptions(context, appWidgetId);
             String key = pref.getKey();
             String val = value.toString();
 
             // Update widget name
-            if (key.startsWith("name.") && !prefs.getString(key, "").equals(val)) {
-                updatePrefSummary(pref, WidgetUtil.getDisplayName(
-                        pref.getContext(), val, appWidgetId));
+            if (key.startsWith("name.") &&
+                    !Objects.equals(prefs.getString(key, ""), val)) {
+                updatePrefSummary(pref, WidgetUtil.getDisplayName(context, val, appWidgetId));
                 return true;
             }
 
             // Update widget url
-            if (key.startsWith("url.") && !prefs.getString(key, "").equals(val)) {
-                WidgetUtil.updateURL(pref.getContext(), appWidgetId, val);
-                updatePrefSummary(pref, WidgetUtil.getDisplayURL(
-                        pref.getContext(), val));
+            if (key.startsWith("url.") &&
+                    !Objects.equals(prefs.getString(key, ""), val)) {
+                WidgetUpdate.update(
+                        context,
+                        options.setUrl(val),
+                        true
+                );
+                updatePrefSummary(pref, WidgetUtil.getDisplayURL(context, val));
                 return true;
             }
 
             // Update widget refresh interval
-            if (key.startsWith("interval.") && !prefs.getString(key, "-1").equals(val)) {
-                WidgetUtil.scheduleUpdate(pref.getContext(), appWidgetId, Long.parseLong(val));
+            if (key.startsWith("interval.") &&
+                    !Objects.equals(prefs.getString(key, "-1"), val)) {
+                WidgetUpdate.schedule(
+                        context,
+                        options.setInterval(Integer.parseInt(val))
+                );
                 updatePrefSummary(pref, value);
                 return true;
             }
 
             // Update wifi setting
-            if (key.startsWith("wifi.") && prefs.getBoolean(key, true) != (Boolean) value) {
+            if (key.startsWith("wifi.") &&
+                    prefs.getBoolean(key, false) != (Boolean) value) {
+                WidgetUpdate.schedule(
+                        context,
+                        options.setWifi((Boolean) value)
+                );
                 return true;
             }
 
             // Update scale setting
-            if (key.startsWith("scale.") && prefs.getBoolean(key, true) != (Boolean) value) {
-                WidgetUtil.updateScale(pref.getContext(), appWidgetId, (Boolean) value);
+            if (key.startsWith("scale.") &&
+                    prefs.getBoolean(key, true) != (Boolean) value) {
+                WidgetUpdate.update(
+                        context,
+                        options.setScaleImage((Boolean) value),
+                        true
+                );
                 return true;
             }
 
             // Update aspect setting
-            if (key.startsWith("aspect.") && prefs.getBoolean(key, true) != (Boolean) value) {
-                WidgetUtil.updateAspect(pref.getContext(), appWidgetId, (Boolean) value);
+            if (key.startsWith("aspect.") &&
+                    prefs.getBoolean(key, true) != (Boolean) value) {
+                WidgetUpdate.update(
+                        context,
+                        options.setPreserveAspectRatio((Boolean) value),
+                        true
+                );
                 return true;
             }
 
-            // Unknown options
+            // Unknown pref
             return false;
         }
     };

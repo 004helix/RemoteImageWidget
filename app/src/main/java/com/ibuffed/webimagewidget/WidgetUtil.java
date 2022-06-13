@@ -3,6 +3,7 @@
  */
 package com.ibuffed.webimagewidget;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetHost;
@@ -13,51 +14,42 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.NonNull;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
-
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 
-class WidgetUtil
+public class WidgetUtil
 {
-    private static final String[] widgetPrefKeys = {
-            "configured", "name", "url", "interval",
-            "wifi", "scale", "aspect"
-    };
+    private enum keyType {
+        STRING,
+        BOOLEAN
+    }
 
-    private static final Class[] widgetPrefClasses = {
-            boolean.class, String.class, String.class, String.class,
-            boolean.class, boolean.class, boolean.class
-    };
-
-    final static String EXTRA_APPWIDGET_URL = "appWidgetURL";
-    final static String EXTRA_APPWIDGET_LAYOUT_ID = "appWidgetLayoutId";
-    final static String EXTRA_APPWIDGET_SHOW_TOASTS = "appWidgetShowToasts";
+    private static final Map<String, keyType> widgetPrefs = Map.of(
+            "configured", keyType.BOOLEAN,
+            "name", keyType.STRING,
+            "url", keyType.STRING,
+            "interval", keyType.STRING,
+            "wifi", keyType.BOOLEAN,
+            "scale", keyType.BOOLEAN,
+            "aspect", keyType.BOOLEAN
+        );
 
     public static String getDisplayName(Context context, String name, int appWidgetId)
     {
-        if (name.equals("")) {
-            return context.getResources().getString(R.string.settings_default_name) + appWidgetId;
-        } else {
-            return name;
-        }
+        return name.equals("") ?
+                context.getResources().getString(R.string.settings_default_name) + appWidgetId:
+                name;
     }
 
     public static String getDisplayURL(Context context, String url)
     {
-        return url.equals("") ? "http://" : url;
+        return url.equals("") ?
+                context.getResources().getString(R.string.settings_default_url) :
+                url;
     }
 
     public static int[] getAppWidgetIds(Context context)
@@ -66,30 +58,27 @@ class WidgetUtil
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName name = new ComponentName(context, WidgetProvider.class);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(name);
-        int configuredCount = 0;
+        ArrayList<Integer> idList = new ArrayList<>();
 
-        for (int i = 0; i < appWidgetIds.length; i++) {
-            if (prefs.getBoolean("configured." + appWidgetIds[i], false)) {
-                configuredCount++;
+        for (int appWidgetId : appWidgetManager.getAppWidgetIds(name)) {
+            if (prefs.getBoolean("configured." + appWidgetId, false)) {
+                // Save appWidgetId
+                idList.add(appWidgetId);
             } else {
                 // Remove phantom widget
-                appWidgetHost.deleteAppWidgetId(appWidgetIds[i]);
-                appWidgetIds[i] = AppWidgetManager.INVALID_APPWIDGET_ID;
+                appWidgetHost.deleteAppWidgetId(appWidgetId);
             }
         }
 
-        int[] configuredIds = new int[configuredCount];
+        int[] ids = new int[idList.size()];
         int i = 0;
 
-        for (int appWidgetId : appWidgetIds) {
-            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
-                configuredIds[i++] = appWidgetId;
-        }
+        for (Integer e : idList)
+            ids[i++] = e;
 
-        Arrays.sort(configuredIds);
+        Arrays.sort(ids);
 
-        return configuredIds;
+        return ids;
     }
 
     public static void deleteWidget(Context context, int appWidgetId)
@@ -97,11 +86,11 @@ class WidgetUtil
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = prefs.edit();
 
-        // Clean update alarm
-        clearUpdate(context, appWidgetId);
+        // Clean scheduled update if any
+        WidgetUpdate.scheduleCancel(context, new WidgetOptions(context, appWidgetId));
 
         // Remove preferences
-        for (String key : widgetPrefKeys) {
+        for (String key : widgetPrefs.keySet()) {
             edit.remove(key + "." + appWidgetId);
         }
 
@@ -113,20 +102,19 @@ class WidgetUtil
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = prefs.edit();
 
-        // Remap widget preferences
-        for (int key = 0; key < widgetPrefKeys.length; key++) {
-            String oldKey = widgetPrefKeys[key] + "." + oldWidgetId;
-            String newKey = widgetPrefKeys[key] + "." + newWidgetId;
+        for (Map.Entry<String, keyType> entry : widgetPrefs.entrySet()) {
+            String oldKey = entry.getKey() + "." + oldWidgetId;
+            String newKey = entry.getKey() + "." + newWidgetId;
 
+            // Remap widget preferences
             if (prefs.contains(oldKey)) {
-                if (widgetPrefClasses[key].equals(String.class)) {
-                    edit.putString(newKey, prefs.getString(oldKey, ""));
-                } else if (widgetPrefClasses[key].equals(int.class)) {
-                    edit.putInt(newKey, prefs.getInt(oldKey, 0));
-                } else if (widgetPrefClasses[key].equals(float.class)) {
-                    edit.putFloat(newKey, prefs.getFloat(oldKey, 0));
-                } else if (widgetPrefClasses[key].equals(boolean.class)) {
-                    edit.putBoolean(newKey, prefs.getBoolean(oldKey, false));
+                switch (entry.getValue()) {
+                    case STRING:
+                        edit.putString(newKey, prefs.getString(oldKey, ""));
+                        break;
+                    case BOOLEAN:
+                        edit.putBoolean(newKey, prefs.getBoolean(oldKey, false));
+                        break;
                 }
                 edit.remove(oldKey);
             }
@@ -135,159 +123,56 @@ class WidgetUtil
         edit.apply();
     }
 
-    private static PendingIntent getAlarmPendingIntent(Context context, int appWidgetId)
-    {
-        int flags = 0;
-        Intent intent = new Intent(context, WidgetProvider.class)
-                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                .setAction(WidgetProvider.APPWIDGET_ALARM);
-
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
-
-        return PendingIntent.getBroadcast(context, appWidgetId, intent, flags);
-    }
-
-    public static void clearUpdate(Context context, int appWidgetId)
-    {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.cancel(getAlarmPendingIntent(context, appWidgetId));
-    }
-
-    public static void scheduleUpdate(Context context, int appWidgetId)
+    @SuppressLint("UnspecifiedImmutableFlag")
+    public static void appUpdate(Context context)
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        scheduleUpdate(context, appWidgetId, Long.parseLong(
-                prefs.getString("interval." + appWidgetId, "-1")
-        ));
-    }
+        int oldVersion = prefs.getInt("version", 0);
 
-    public static void scheduleUpdate(Context context, int appWidgetId, long interval)
-    {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = getAlarmPendingIntent(context, appWidgetId);
+        //oldVersion = 2;
+        if (oldVersion >= BuildConfig.VERSION_CODE)
+            return;
 
-        // Cancel current alarm if any
-        alarmManager.cancel(pendingIntent);
+        AlarmManager alarmManager =
+                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        // Schedule new alarm
-        if (interval > 0) {
-            alarmManager.setInexactRepeating(AlarmManager.RTC,
-                    System.currentTimeMillis(), interval * 60 * 1000, pendingIntent
-            );
-        }
-    }
-
-    private static Intent getUpdateIntent(Context context, int appWidgetId)
-    {
-        return new Intent(context, WidgetProvider.class)
-                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                .setAction(WidgetProvider.APPWIDGET_UPDATE);
-    }
-
-    public static void updateURL(Context context, int appWidgetId, String url)
-    {
-        context.sendBroadcast(
-                getUpdateIntent(context, appWidgetId).putExtra("url", url)
-        );
-    }
-
-    public static void updateScale(Context context, int appWidgetId, boolean scale)
-    {
-        context.sendBroadcast(
-                getUpdateIntent(context, appWidgetId).putExtra("scale", scale)
-        );
-    }
-
-    public static void updateAspect(Context context, int appWidgetId, boolean aspect)
-    {
-        context.sendBroadcast(
-                getUpdateIntent(context, appWidgetId).putExtra("aspect", aspect)
-        );
-    }
-
-    public static void updateWidget(Context context, WidgetOptions options)
-    {
-        updateWidget(context, options, false);
-    }
-
-    public static void updateWidget(Context context, WidgetOptions options, boolean showToasts)
-    {
-        Data.Builder data = new Data.Builder();
-        data.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, options.getAppWidgetId());
-        data.putString(EXTRA_APPWIDGET_URL, options.getUrl());
-        data.putInt(EXTRA_APPWIDGET_LAYOUT_ID, options.getLayoutId());
-        data.putBoolean(EXTRA_APPWIDGET_SHOW_TOASTS, showToasts);
-
-        getWorkManager(context).enqueue(
-                new OneTimeWorkRequest.Builder(WidgetWorker.class)
-                        .setInputData(data.build())
-                        .addTag("WidgetUpdate")
-                        .build()
-        );
-    }
-
-    /*
-     * workaround
-     * https://issuetracker.google.com/issues/115575872
-     * https://commonsware.com/blog/2018/11/24/workmanager-app-widgets-side-effects.html
-     */
-    public static WorkManager getWorkManager(Context context)
-    {
-        WorkManager workManager = WorkManager.getInstance(context);
-        boolean dummyRunning = false;
-
-        try {
-            List<WorkInfo> workInfoList =
-                    workManager.getWorkInfosByTag(DummyWorker.DUMMY_WORKER_TAG).get();
-            for (WorkInfo workInfo : workInfoList) {
-                WorkInfo.State state = workInfo.getState();
-                dummyRunning = state == WorkInfo.State.RUNNING |
-                        state == WorkInfo.State.ENQUEUED;
+        for (int appWidgetId : getAppWidgetIds(context)) {
+            // TODO: remove this check (for 1.1 version)
+            if (oldVersion <= 2) {
+                alarmManager.cancel(
+                        PendingIntent.getBroadcast(
+                                context,
+                                0,
+                                new Intent(context, WidgetProvider.class)
+                                        .setAction("appWidgetAlarm." + appWidgetId),
+                                // TODO: flag = 0 prevents me to update targetSdkVersion > 30
+                                0
+                        )
+                );
             }
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        if (!dummyRunning) {
-            DummyWorker.schedule(context);
-        }
+            int flags = 0;
 
-        return workManager;
-    }
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= PendingIntent.FLAG_IMMUTABLE;
+            }
 
-    public static class DummyWorker extends Worker
-    {
-        final static String DUMMY_WORKER_TAG = "DummyWorker";
-        final static String DUMMY_WORK_NAME = "DummyWork";
-
-        public DummyWorker (@NonNull Context context, @NonNull WorkerParameters workerParams)
-        {
-            super (context, workerParams);
-        }
-
-        @NonNull
-        @Override
-        public Result doWork()
-        {
-            schedule(getApplicationContext());
-            return Result.success();
-        }
-
-        @AnyThread
-        public static void schedule(Context context)
-        {
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                    DUMMY_WORK_NAME,
-                    ExistingWorkPolicy.REPLACE,
-                    new OneTimeWorkRequest.Builder(DummyWorker.class)
-                            .addTag(DUMMY_WORKER_TAG)
-                            .setInitialDelay(10L * 365L, TimeUnit.DAYS)
-                            .build()
+            alarmManager.cancel(
+                    PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            new Intent(context, WidgetProvider.class)
+                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                                    .setAction("com.ibuffed.webimagewidget.ALARM"),
+                            flags
+                    )
             );
         }
+
+        Log.i("WidgetUtil", "canceled all pending alarms");
+
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.putInt("version", BuildConfig.VERSION_CODE);
+        edit.apply();
     }
 }

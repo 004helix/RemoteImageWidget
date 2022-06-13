@@ -4,25 +4,34 @@
 package com.ibuffed.webimagewidget;
 
 import android.appwidget.AppWidgetManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.multidex.MultiDex;
 
 
-/**
- * Main activity dispatcher
- */
 public class ActivityDispatcher extends AppCompatActivity
 {
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 
+        // Perform app update
+        WidgetUtil.appUpdate(this);
+
         // Find the appWidgetId from the intent
         int appWidgetId = getIntent().getIntExtra(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+        );
 
         // Dispatch widget preference fragment if appWidgetId is valid
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
@@ -41,7 +50,8 @@ public class ActivityDispatcher extends AppCompatActivity
 
             // Show WidgetPreferenceFragment
             getSupportFragmentManager().beginTransaction().replace(
-                android.R.id.content, fragment
+                    android.R.id.content,
+                    fragment
             ).commit();
 
             return;
@@ -52,11 +62,10 @@ public class ActivityDispatcher extends AppCompatActivity
 
         // Dispatch widget preference activity
         if (appWidgetIds.length > 0) {
-            WidgetPreferenceActivity fragment = new WidgetPreferenceActivity();
-
             // Show WidgetPreferenceActivity
             getSupportFragmentManager().beginTransaction().replace(
-                android.R.id.content, fragment
+                    android.R.id.content,
+                    new WidgetPreferenceActivity()
             ).commit();
 
             return;

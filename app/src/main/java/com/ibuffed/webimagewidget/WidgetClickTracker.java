@@ -7,10 +7,7 @@ import android.util.SparseLongArray;
 import android.os.SystemClock;
 
 
-/**
- * Implementation of WidgetClickTracker functionality.
- */
-class WidgetClickTracker
+public class WidgetClickTracker
 {
     private static final WidgetClickTracker tracker = new WidgetClickTracker();
     private final SparseLongArray clicks = new SparseLongArray();
