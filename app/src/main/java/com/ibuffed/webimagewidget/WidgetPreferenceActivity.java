@@ -3,31 +3,37 @@
  */
 package com.ibuffed.webimagewidget;
 
-import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.PreferenceViewHolder;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 
 public class WidgetPreferenceActivity extends PreferenceFragmentCompat
 {
-    public void addWidgetToScreen(int appWidgetId, PreferenceScreen screen)
+    private static final String backStateName = WidgetPreferenceActivity.class.getName();
+
+    private void addWidget(PreferenceScreen screen, int appWidgetId)
     {
         Context context = getContext();
-        String backStateName = this.getClass().getName();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         assert context != null;
@@ -38,24 +44,11 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
                 super.onBindViewHolder(holder);
                 View itemView = holder.itemView;
 
-                itemView.setOnClickListener(preference -> {
-                    WidgetPreferenceFragment fragment = new WidgetPreferenceFragment();
-                    Bundle fragmentArguments = new Bundle();
-                    fragmentArguments.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-                    fragment.setArguments(fragmentArguments);
-
-                    getParentFragmentManager()
-                            .beginTransaction()
-                            .replace(android.R.id.content, fragment)
-                            .addToBackStack(backStateName)
-                            .commit();
-                });
-
                 itemView.setOnLongClickListener(preference -> {
                     DialogInterface.OnClickListener clickListener = (dialog, witch) -> {
                         if (witch == DialogInterface.BUTTON_POSITIVE) {
                             WidgetUtil.deleteWidget(context, appWidgetId);
-                            rebuildWidgetScreen();
+                            onCreatePreferences(null, null);
                         }
                     };
 
@@ -69,60 +62,115 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
                 });
             }
         };
-
+        widget.setKey("name." + appWidgetId);
         widget.setIcon(R.drawable.ic_widgets_24dp);
-        widget.setTitle(
-                WidgetUtil.getDisplayName(
-                        context,
-                        Objects.requireNonNull(prefs.getString("name." + appWidgetId, "")),
-                        appWidgetId
-                )
-        );
-        widget.setSummary(
-                WidgetUtil.getDisplayURL(
-                        context,
-                        Objects.requireNonNull(prefs.getString("url." + appWidgetId, ""))
-                )
-        );
+        widget.setTitle(WidgetUtil.getDisplayName(
+                context,
+                Objects.requireNonNull(prefs.getString("name." + appWidgetId, "")),
+                appWidgetId
+        ));
+        widget.setSummaryProvider(preference -> WidgetUtil.getDisplayURL(
+                context,
+                Objects.requireNonNull(prefs.getString("url." + appWidgetId, ""))
+        ));
+        widget.setOnPreferenceClickListener(preference -> {
+            WidgetPreferenceFragment fragment = new WidgetPreferenceFragment();
+            Bundle fragmentArguments = new Bundle();
+            fragmentArguments.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+            fragment.setArguments(fragmentArguments);
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, fragment)
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .addToBackStack(backStateName)
+                    .commit();
+
+            return true;
+        });
 
         screen.addPreference(widget);
-    }
-
-    public void rebuildWidgetScreen()
-    {
-        Context context = getContext();
-        Activity activity = getActivity();
-
-        assert context != null;
-        assert activity != null;
-
-        // Create new screen
-        PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
-
-        for (int appWidgetId : WidgetUtil.getAppWidgetIds(context)) {
-            this.addWidgetToScreen(appWidgetId, screen);
-        }
-
-        activity.setTitle(context.getResources().getString(R.string.activity_widgets));
-        setPreferenceScreen(screen);
     }
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
     {
-        // Create new PreferenceScreen
         Context context = getContext();
 
         assert context != null;
+
+        // Create new screen
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
 
+        // Add widgets
+        for (int appWidgetId : WidgetUtil.getAppWidgetIds(context)) {
+            this.addWidget(screen, appWidgetId);
+        }
+
+        // Update screen
         setPreferenceScreen(screen);
+    }
+
+    @NonNull
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container,
+                             Bundle savedInstanceState)
+    {
+        LinearLayout view = (LinearLayout) super.onCreateView(
+                inflater,
+                container,
+                savedInstanceState
+        );
+
+        assert view != null;
+
+        Context context = getContext();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+
+        if (context == null || activity == null)
+            return view;
+
+        // Update title
+        activity.setTitle(context.getResources().getString(R.string.activity_widgets));
+
+        // Update widget titles
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        PreferenceScreen screen = getPreferenceScreen();
+        for (int i = 0; i < screen.getPreferenceCount(); i++) {
+            Preference widget = screen.getPreference(i);
+            String widgetKey = widget.getKey();  // name.<id>
+            int appWidgetId = Integer.parseInt(widgetKey.substring(5));
+            widget.setTitle(
+                    WidgetUtil.getDisplayName(
+                            context,
+                            Objects.requireNonNull(prefs.getString(widgetKey, "")),
+                            appWidgetId
+                    )
+            );
+        }
+
+        return view;
     }
 
     @Override
     public void onStart()
     {
         super.onStart();
-        rebuildWidgetScreen();
+
+        // Check widgets was added and/or deleted
+        PreferenceScreen screen = getPreferenceScreen();
+        int count = screen.getPreferenceCount();
+        int[] ids = new int[count];
+
+        for (int i = 0; i < count; i++) {
+            String key = screen.getPreference(i).getKey();
+            ids[i] = Integer.parseInt(key.substring(5));  // name.<id>
+        }
+
+        Arrays.sort(ids);
+
+        if (!Arrays.equals(ids, WidgetUtil.getAppWidgetIds(getContext())))
+            onCreatePreferences(null, null);
     }
 }

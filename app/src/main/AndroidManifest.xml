@@ -12,6 +12,7 @@
         android:theme="@style/AppTheme"
         android:fullBackupContent="true"
         android:usesCleartextTraffic="true">
+
         <activity
             android:name=".ActivityDispatcher"
             android:exported="true">
