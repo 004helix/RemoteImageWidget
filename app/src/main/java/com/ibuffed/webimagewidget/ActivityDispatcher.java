@@ -24,25 +24,32 @@ public class ActivityDispatcher
         extends AppCompatActivity
         implements FragmentManager.OnBackStackChangedListener
 {
+    private static final String THEME_KEY = "theme";
     private static int theme = 0;
 
     private void applyTheme()
     {
+        int mode = AppCompatDelegate.MODE_NIGHT_UNSPECIFIED;
+
         switch (theme) {
             case 0:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                mode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
                 break;
             case 1:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                mode = AppCompatDelegate.MODE_NIGHT_NO;
                 break;
             case 2:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                mode = AppCompatDelegate.MODE_NIGHT_YES;
                 break;
         }
-        getSupportFragmentManager().popBackStack(
-                null,
-                FragmentManager.POP_BACK_STACK_INCLUSIVE
-        );
+
+        if (AppCompatDelegate.getDefaultNightMode() != mode) {
+            AppCompatDelegate.setDefaultNightMode(mode);
+            getSupportFragmentManager().popBackStack(
+                    null,
+                    FragmentManager.POP_BACK_STACK_INCLUSIVE
+            );
+        }
     }
 
     @Override
@@ -73,12 +80,12 @@ public class ActivityDispatcher
             new AlertDialog.Builder(this)
                     .setTitle(R.string.menu_item_theme)
                     .setSingleChoiceItems(themes, theme, (dialogInterface, i) -> theme = i)
-                    .setPositiveButton("OK", (dialogInterface, i) -> {
-                        prefs.edit().putInt("theme", theme).apply();
+                    .setPositiveButton(R.string.activity_dialog_yes, (dialogInterface, i) -> {
+                        prefs.edit().putInt(THEME_KEY, theme).apply();
                         applyTheme();
                     })
-                    .setNegativeButton("Cancel", (dialogInterface, i) ->
-                            theme = prefs.getInt("theme", 0))
+                    .setNegativeButton(R.string.activity_dialog_no, (dialogInterface, i) ->
+                            theme = prefs.getInt(THEME_KEY, 0))
                     .show();
 
             return true;
@@ -115,7 +122,7 @@ public class ActivityDispatcher
 
         // Apply selected theme
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        theme = prefs.getInt("theme", 0);
+        theme = prefs.getInt(THEME_KEY, 0);
         applyTheme();
 
         // Auto back button

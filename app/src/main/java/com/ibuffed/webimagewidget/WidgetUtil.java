@@ -23,6 +23,8 @@ import java.util.Map;
 
 public class WidgetUtil
 {
+    public static final String VERSION_KEY = "version";
+
     private enum keyType {
         STRING,
         BOOLEAN
@@ -127,7 +129,7 @@ public class WidgetUtil
     public static void appUpdate(Context context)
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        int oldVersion = prefs.getInt("version", 0);
+        int oldVersion = prefs.getInt(VERSION_KEY, 0);
 
         //oldVersion = 2;
         if (oldVersion >= BuildConfig.VERSION_CODE)
@@ -169,10 +171,8 @@ public class WidgetUtil
             );
         }
 
-        Log.i("WidgetUtil", "canceled all pending alarms");
+        prefs.edit().putInt(VERSION_KEY, BuildConfig.VERSION_CODE).apply();
 
-        SharedPreferences.Editor edit = prefs.edit();
-        edit.putInt("version", BuildConfig.VERSION_CODE);
-        edit.apply();
+        Log.i("WidgetUtil", "canceled all pending alarms");
     }
 }

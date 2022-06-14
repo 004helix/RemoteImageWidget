@@ -5,7 +5,6 @@ package com.ibuffed.webimagewidget;
 
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -42,20 +41,14 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
             @Override
             public void onBindViewHolder(@NonNull final PreferenceViewHolder holder) {
                 super.onBindViewHolder(holder);
-                View itemView = holder.itemView;
-
-                itemView.setOnLongClickListener(preference -> {
-                    DialogInterface.OnClickListener clickListener = (dialog, witch) -> {
-                        if (witch == DialogInterface.BUTTON_POSITIVE) {
-                            WidgetUtil.deleteWidget(context, appWidgetId);
-                            onCreatePreferences(null, null);
-                        }
-                    };
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                    builder.setMessage(R.string.activity_remove)
-                            .setPositiveButton(R.string.activity_remove_yes, clickListener)
-                            .setNegativeButton(R.string.activity_remove_no, clickListener)
+                holder.itemView.setOnLongClickListener(preference -> {
+                    new AlertDialog.Builder(context)
+                            .setMessage(R.string.activity_remove)
+                            .setPositiveButton(R.string.activity_dialog_yes, (dialogInterface, i) -> {
+                                WidgetUtil.deleteWidget(context, appWidgetId);
+                                onCreatePreferences(null, null);
+                            })
+                            .setNegativeButton(R.string.activity_dialog_no, null)
                             .show();
 
                     return true;

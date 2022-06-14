@@ -15,8 +15,8 @@
     <string name="activity_remove">Are you sure you want to remove this widget?
     You should press \"Yes\" button only if you encountered a \"phantom\" widget
     (invisible on homescreen).</string>
-    <string name="activity_remove_yes">Yes</string>
-    <string name="activity_remove_no">No</string>
+    <string name="activity_dialog_yes">Yes</string>
+    <string name="activity_dialog_no">No</string>
 
     <!-- WidgetPreferenceFragment -->
     <string name="activity_widget">Widget Settings #</string>
