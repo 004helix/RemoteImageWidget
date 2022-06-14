@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.widget.Toast;
 
 
@@ -26,6 +25,7 @@ public class WidgetProvider extends AppWidgetProvider
             WidgetUpdate.update(context, options, false);
             WidgetUpdate.schedule(context, options);
         }
+        super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
 
     @Override

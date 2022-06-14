@@ -22,8 +22,10 @@
     <string name="activity_widget">Widget Settings #</string>
     <string name="activity_create_button">Create Widget</string>
     <string name="settings_title_name">Widget Name</string>
+    <string name="settings_title_name_description">Widget name as it will be displayed in the list of widgets</string>
     <string name="settings_default_name">Widget #</string>
     <string name="settings_title_url">Image URL</string>
+    <string name="settings_title_url_description">The URL of the image that will be displayed on the widget</string>
     <string name="settings_default_url">http://</string>
     <string name="settings_title_interval">Refresh Interval</string>
     <string-array name="settings_interval_titles">

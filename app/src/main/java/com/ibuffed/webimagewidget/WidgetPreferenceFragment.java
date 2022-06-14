@@ -63,6 +63,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         EditTextPreference name = new EditTextPreference(context);
         name.setKey("name." + appWidgetId);
         name.setTitle(R.string.settings_title_name);
+        name.setDialogTitle(R.string.settings_title_name);
+        name.setDialogMessage(R.string.settings_title_name_description);
         name.setOnBindEditTextListener(editText -> {
             editText.setInputType(InputType.TYPE_TEXT_FLAG_CAP_WORDS);
             editText.setMaxLines(1);
@@ -83,6 +85,8 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         EditTextPreference url = new EditTextPreference(context);
         url.setKey("url." + appWidgetId);
         url.setTitle(R.string.settings_title_url);
+        url.setDialogTitle(R.string.settings_title_url);
+        url.setDialogMessage(R.string.settings_title_url_description);
         url.setOnBindEditTextListener(editText -> {
             editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
             editText.setMaxLines(1);
@@ -102,6 +106,7 @@ public class WidgetPreferenceFragment extends PreferenceFragmentCompat
         ListPreference interval = new ListPreference(context);
         interval.setKey("interval." + appWidgetId);
         interval.setTitle(R.string.settings_title_interval);
+        interval.setDialogTitle(R.string.settings_title_interval);
         interval.setEntries(R.array.settings_interval_titles);
         interval.setEntryValues(R.array.settings_interval_values);
         interval.setIcon(R.drawable.ic_sync_24dp);

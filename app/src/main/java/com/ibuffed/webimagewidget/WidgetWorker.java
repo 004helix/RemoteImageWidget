@@ -78,7 +78,7 @@ public class WidgetWorker extends Worker
         }
 
         // Create pending intent
-        int pendingIntentFlags = 0;
+        int pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             pendingIntentFlags |= PendingIntent.FLAG_IMMUTABLE;
