@@ -37,9 +37,11 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
 
         assert context != null;
 
-        Preference widget = new Preference(context) {
+        Preference widget = new Preference(context)
+        {
             @Override
-            public void onBindViewHolder(@NonNull final PreferenceViewHolder holder) {
+            public void onBindViewHolder(@NonNull final PreferenceViewHolder holder)
+            {
                 super.onBindViewHolder(holder);
                 holder.itemView.setOnLongClickListener(preference -> {
                     new AlertDialog.Builder(context)

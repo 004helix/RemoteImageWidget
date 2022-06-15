@@ -42,7 +42,6 @@ public class WidgetPreferenceFragment
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
     {
-        // Create new PreferenceScreen
         Context context = getContext();
         Bundle arguments = getArguments();
 
