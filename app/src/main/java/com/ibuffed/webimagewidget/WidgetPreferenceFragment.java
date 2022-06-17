@@ -11,9 +11,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
@@ -48,11 +46,12 @@ public class WidgetPreferenceFragment
         assert context != null;
         assert arguments != null;
 
-        // Create new screen
+        // Create screen
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
+        setPreferenceScreen(screen);
 
-        // Load preferences
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        // Get preferences
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
         // Get appWidgetId and initial status from arguments
         appWidgetId = arguments.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
@@ -73,7 +72,7 @@ public class WidgetPreferenceFragment
         name.setOnPreferenceChangeListener(this);
         name.setSummaryProvider(preference -> WidgetUtil.getDisplayName(
                 context,
-                Objects.requireNonNull(prefs.getString(preference.getKey(), "")),
+                sp.getString(preference.getKey(), ""),
                 appWidgetId
         ));
         screen.addPreference(name);
@@ -93,7 +92,7 @@ public class WidgetPreferenceFragment
         url.setOnPreferenceChangeListener(this);
         url.setSummaryProvider(preference -> WidgetUtil.getDisplayURL(
                 context,
-                Objects.requireNonNull(prefs.getString(preference.getKey(), ""))
+                sp.getString(preference.getKey(), "")
         ));
         screen.addPreference(url);
 
@@ -101,6 +100,7 @@ public class WidgetPreferenceFragment
         ListPreference interval = new ListPreference(context);
         interval.setKey("interval." + appWidgetId);
         interval.setTitle(R.string.settings_title_interval);
+        interval.setDefaultValue("-1");
         interval.setDialogTitle(R.string.settings_title_interval);
         interval.setEntries(R.array.settings_interval_titles);
         interval.setEntryValues(R.array.settings_interval_values);
@@ -109,9 +109,9 @@ public class WidgetPreferenceFragment
         interval.setSummaryProvider(preference -> {
             ListPreference listPreference = (ListPreference) preference;
             int index = listPreference.findIndexOfValue(
-                    prefs.getString(preference.getKey(), "-1")
+                    sp.getString(preference.getKey(), "-1")
             );
-            return index >= 0 ? (String) listPreference.getEntries()[index] : null;
+            return index >= 0 ? listPreference.getEntries()[index] : null;
         });
         screen.addPreference(interval);
 
@@ -142,37 +142,26 @@ public class WidgetPreferenceFragment
         aspect.setOnPreferenceChangeListener(this);
         screen.addPreference(aspect);
 
-        // Set screen
-        setPreferenceScreen(screen);
-
         // Add scale->aspect dependency
         aspect.setDependency(scale.getKey());
     }
 
-    @NonNull
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState)
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState)
     {
         Context context = getContext();
         AppCompatActivity activity = (AppCompatActivity) getActivity();
-        LinearLayout view = (LinearLayout) super.onCreateView(
-                inflater,
-                container,
-                savedInstanceState
-        );
 
-        assert view != null;
-
-        if (context == null || activity == null)
-            return view;
+        assert context != null;
+        assert activity != null;
 
         // Set title
         activity.setTitle(context.getResources().getString(R.string.activity_widget) + appWidgetId);
 
-        if (!initial)
-            return view;
+        if (!initial) {
+            super.onViewCreated(view, savedInstanceState);
+            return;
+        }
 
         // Add "create widget" button
         Button button = new Button(activity);
@@ -187,19 +176,19 @@ public class WidgetPreferenceFragment
             );
         }
         button.setOnClickListener(v -> {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+            PreferenceManager
+                    .getDefaultSharedPreferences(activity).edit()
+                    .putBoolean("configured." + appWidgetId, true)
+                    .apply();
 
-            Intent resultValue = new Intent();
-            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            activity.setResult(Activity.RESULT_OK, resultValue);
-
-            prefs.edit().putBoolean("configured." + appWidgetId, true).apply();
-
+            activity.setResult(Activity.RESULT_OK, new Intent()
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
             activity.finish();
         });
-        view.addView(button);
 
-        return view;
+        ((LinearLayout) view).addView(button);
+
+        super.onViewCreated(view, savedInstanceState);
     }
 
     /**
@@ -208,20 +197,20 @@ public class WidgetPreferenceFragment
      * was changed.
      */
     @Override
-    public boolean onPreferenceChange(Preference pref, Object value)
+    public boolean onPreferenceChange(@NonNull Preference pref, @NonNull Object value)
     {
         Context context = pref.getContext();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         WidgetOptions options = new WidgetOptions(context, appWidgetId);
         String key = pref.getKey();
         String val = value.toString();
 
         // Update widget name
-        if (key.startsWith("name.") && !Objects.equals(prefs.getString(key, ""), val))
+        if (key.startsWith("name.") && !Objects.equals(sp.getString(key, ""), val))
             return true;
 
         // Update widget url
-        if (key.startsWith("url.") && !Objects.equals(prefs.getString(key, ""), val)) {
+        if (key.startsWith("url.") && !Objects.equals(sp.getString(key, ""), val)) {
             WidgetUpdate.update(
                     context,
                     options.setUrl(val),
@@ -231,7 +220,7 @@ public class WidgetPreferenceFragment
         }
 
         // Update widget refresh interval
-        if (key.startsWith("interval.") && !Objects.equals(prefs.getString(key, "-1"), val)) {
+        if (key.startsWith("interval.") && !Objects.equals(sp.getString(key, "-1"), val)) {
             WidgetUpdate.schedule(
                     context,
                     options.setInterval(Integer.parseInt(val))
@@ -240,7 +229,7 @@ public class WidgetPreferenceFragment
         }
 
         // Update wifi setting
-        if (key.startsWith("wifi.") && prefs.getBoolean(key, false) != (Boolean) value) {
+        if (key.startsWith("wifi.") && sp.getBoolean(key, false) != (Boolean) value) {
             WidgetUpdate.schedule(
                     context,
                     options.setWifi((Boolean) value)
@@ -249,7 +238,7 @@ public class WidgetPreferenceFragment
         }
 
         // Update scale setting
-        if (key.startsWith("scale.") && prefs.getBoolean(key, true) != (Boolean) value) {
+        if (key.startsWith("scale.") && sp.getBoolean(key, true) != (Boolean) value) {
             WidgetUpdate.update(
                     context,
                     options.setScaleImage((Boolean) value),
@@ -259,7 +248,7 @@ public class WidgetPreferenceFragment
         }
 
         // Update aspect setting
-        if (key.startsWith("aspect.") && prefs.getBoolean(key, true) != (Boolean) value) {
+        if (key.startsWith("aspect.") && sp.getBoolean(key, true) != (Boolean) value) {
             WidgetUpdate.update(
                     context,
                     options.setPreserveAspectRatio((Boolean) value),

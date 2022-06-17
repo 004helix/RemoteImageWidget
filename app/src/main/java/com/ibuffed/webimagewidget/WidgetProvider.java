@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 
 public class WidgetProvider extends AppWidgetProvider
 {
@@ -17,7 +19,9 @@ public class WidgetProvider extends AppWidgetProvider
     final static String APPWIDGET_CLICK = "com.ibuffed.webimagewidget.CLICK";
 
     @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
+    public void onUpdate(Context context,
+                         AppWidgetManager appWidgetManager,
+                         @NonNull int[] appWidgetIds)
     {
         WidgetUtil.appUpdate(context);
         for (int appWidgetId : appWidgetIds) {
@@ -41,13 +45,8 @@ public class WidgetProvider extends AppWidgetProvider
 
         //Log.d("WidgetProvider", "action: " + action + ", appWidgetId=" + appWidgetId);
 
-        if (action == null) {
+        if (action == null || appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID)
             return;
-        }
-
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            return;
-        }
 
         // Show toast
         if (action.equals(APPWIDGET_TOAST)) {
@@ -68,18 +67,16 @@ public class WidgetProvider extends AppWidgetProvider
     }
 
     @Override
-    public void onDeleted(Context context, int[] appWidgetIds)
+    public void onDeleted(Context context, @NonNull int[] appWidgetIds)
     {
-        for (int appWidgetId : appWidgetIds) {
+        for (int appWidgetId : appWidgetIds)
             WidgetUtil.deleteWidget(context, appWidgetId);
-        }
     }
 
     @Override
-    public void onRestored(Context context, int[] oldWidgetIds, int[] newWidgetIds)
+    public void onRestored(Context context, @NonNull int[] oldWidgetIds, int[] newWidgetIds)
     {
-        for (int i = 0; i < oldWidgetIds.length; i++) {
+        for (int i = 0; i < oldWidgetIds.length; i++)
             WidgetUtil.restoreWidget(context, oldWidgetIds[i], newWidgetIds[i]);
-        }
     }
 }

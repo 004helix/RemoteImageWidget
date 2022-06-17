@@ -1,12 +1,20 @@
 <resources>
     <string name="app_name">Web Image Widget</string>
 
+    <!-- menu items -->
+    <string name="menu_item_theme">Theme</string>
+
     <!-- empty screen text -->
     <string name="no_widgets">No Widgets Created</string>
 
     <!-- toasts -->
     <string name="toast_updated">updated</string>
     <string name="toast_update_failed">Update failed:</string>
+
+    <!-- theme selection dialog -->
+    <string name="theme_auto">Automatic</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
 
     <!-- WidgetPreferenceActivity -->
     <string name="activity_widgets">Active Widgets</string>
@@ -15,6 +23,7 @@
     <string name="activity_remove">Are you sure you want to remove this widget?
     You should press \"Yes\" button only if you encountered a \"phantom\" widget
     (invisible on homescreen).</string>
+    <string name="activity_dialog_cancel">Cancel</string>
     <string name="activity_dialog_yes">Yes</string>
     <string name="activity_dialog_no">No</string>
 
@@ -23,10 +32,10 @@
     <string name="activity_create_button">Create Widget</string>
     <string name="settings_title_name">Widget Name</string>
     <string name="settings_title_name_description">Widget name as it will be displayed in the list of widgets</string>
-    <string name="settings_default_name">Widget #</string>
+    <string name="settings_title_default_name">Widget #</string>
     <string name="settings_title_url">Image URL</string>
     <string name="settings_title_url_description">The URL of the image that will be displayed on the widget</string>
-    <string name="settings_default_url">http://</string>
+    <string name="settings_title_default_url">http://</string>
     <string name="settings_title_interval">Refresh Interval</string>
     <string-array name="settings_interval_titles">
         <item>Never</item>
@@ -55,8 +64,4 @@
     <string name="settings_title_wifi">Update over WiFi only</string>
     <string name="settings_title_scale">Scale Image</string>
     <string name="settings_title_aspect">Preserve Aspect Ratio</string>
-    <string name="menu_item_theme">Theme</string>
-    <string name="theme_auto">Automatic</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
 </resources>

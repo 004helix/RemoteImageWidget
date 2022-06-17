@@ -4,19 +4,18 @@
 package com.ibuffed.webimagewidget;
 
 import android.appwidget.AppWidgetManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.FragmentManager;
-import androidx.multidex.MultiDex;
 import androidx.preference.PreferenceManager;
 
 
@@ -43,24 +42,12 @@ public class ActivityDispatcher
                 break;
         }
 
-        if (AppCompatDelegate.getDefaultNightMode() != mode) {
+        if (AppCompatDelegate.getDefaultNightMode() != mode)
             AppCompatDelegate.setDefaultNightMode(mode);
-            getSupportFragmentManager().popBackStack(
-                    null,
-                    FragmentManager.POP_BACK_STACK_INCLUSIVE
-            );
-        }
     }
 
     @Override
-    protected void attachBaseContext(Context base)
-    {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item)
+    public boolean onOptionsItemSelected(@NonNull MenuItem item)
     {
         int id = item.getItemId();
 
@@ -70,7 +57,7 @@ public class ActivityDispatcher
         }
 
         if (id == R.id.menu_theme) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             String[] themes = {
                     this.getResources().getString(R.string.theme_auto),
                     this.getResources().getString(R.string.theme_light),
@@ -79,13 +66,14 @@ public class ActivityDispatcher
 
             new AlertDialog.Builder(this)
                     .setTitle(R.string.menu_item_theme)
-                    .setSingleChoiceItems(themes, theme, (dialogInterface, i) -> theme = i)
-                    .setPositiveButton(R.string.activity_dialog_yes, (dialogInterface, i) -> {
-                        prefs.edit().putInt(THEME_KEY, theme).apply();
+                    .setSingleChoiceItems(themes, theme, (dialog, i) -> {
+                        sp.edit().putInt(THEME_KEY, theme = i).apply();
+                        dialog.dismiss();
                         applyTheme();
                     })
-                    .setNegativeButton(R.string.activity_dialog_no, (dialogInterface, i) ->
-                            theme = prefs.getInt(THEME_KEY, 0))
+                    .setNegativeButton(R.string.activity_dialog_cancel, (dialog, i) ->
+                            theme = sp.getInt(THEME_KEY, 0)
+                    )
                     .show();
 
             return true;
@@ -115,10 +103,11 @@ public class ActivityDispatcher
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        super.onCreate(savedInstanceState);
-
         // Perform app update
         WidgetUtil.appUpdate(this);
+
+        // Restore saved state if any
+        super.onCreate(savedInstanceState);
 
         // Apply selected theme
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -128,10 +117,16 @@ public class ActivityDispatcher
         // Auto back button
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.addOnBackStackChangedListener(this);
+        onBackStackChanged();
+
+        // Check saved instance
+        if (savedInstanceState != null)
+            return;
 
         // Find the appWidgetId from the intent
         int appWidgetId = getIntent().getIntExtra(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
         );
 
         // Dispatch widget preference fragment if appWidgetId is valid

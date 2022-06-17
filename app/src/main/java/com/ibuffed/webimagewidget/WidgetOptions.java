@@ -21,15 +21,15 @@ public class WidgetOptions
 
     WidgetOptions(Context context, int appWidgetId)
     {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        url = prefs.getString("url." + appWidgetId, "");
+        url = sp.getString("url." + appWidgetId, "");
         interval = Integer.parseInt(
-                Objects.requireNonNull(prefs.getString("interval." + appWidgetId, "-1"))
+                Objects.requireNonNull(sp.getString("interval." + appWidgetId, "-1"))
         );
-        scaleImage = prefs.getBoolean("scale." + appWidgetId, true);
-        preserveAspectRatio = prefs.getBoolean("aspect." + appWidgetId, true);
-        wifi = prefs.getBoolean("wifi." + appWidgetId, false);
+        scaleImage = sp.getBoolean("scale." + appWidgetId, true);
+        preserveAspectRatio = sp.getBoolean("aspect." + appWidgetId, true);
+        wifi = sp.getBoolean("wifi." + appWidgetId, false);
         this.appWidgetId = appWidgetId;
     }
 

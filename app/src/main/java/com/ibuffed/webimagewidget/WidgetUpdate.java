@@ -74,6 +74,7 @@ public class WidgetUpdate
      * https://issuetracker.google.com/issues/115575872
      * https://commonsware.com/blog/2018/11/24/workmanager-app-widgets-side-effects.html
      */
+    @NonNull
     public static WorkManager getWorkManager(Context context)
     {
         WorkManager workManager = WorkManager.getInstance(context);
@@ -93,14 +94,13 @@ public class WidgetUpdate
             e.printStackTrace();
         }
 
-        if (!dummyRunning) {
+        if (!dummyRunning)
             DummyWorker.schedule(context);
-        }
 
         return workManager;
     }
 
-    public static void scheduleCancel(Context context, WidgetOptions options)
+    public static void scheduleCancel(Context context, @NonNull WidgetOptions options)
     {
         getWorkManager(context)
                 .cancelAllWorkByTag(SCHEDULE_WORKER_TAG + "#" + options.getAppWidgetId());
@@ -108,7 +108,7 @@ public class WidgetUpdate
         log(options.getAppWidgetId(), "any scheduled update was canceled");
     }
 
-    public static void schedule(Context context, WidgetOptions options)
+    public static void schedule(Context context, @NonNull WidgetOptions options)
     {
         WorkManager workManager = getWorkManager(context);
         String tag = SCHEDULE_WORKER_TAG + "#" + options.getAppWidgetId();
@@ -150,7 +150,7 @@ public class WidgetUpdate
         }
     }
 
-    public static void update(Context context, WidgetOptions options, boolean showToast)
+    public static void update(Context context, @NonNull WidgetOptions options, boolean showToast)
     {
         Data.Builder data = new Data.Builder();
         data.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, options.getAppWidgetId());

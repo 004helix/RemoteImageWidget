@@ -8,10 +8,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -23,20 +20,17 @@ import androidx.preference.PreferenceScreen;
 import androidx.preference.PreferenceViewHolder;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 
 public class WidgetPreferenceActivity extends PreferenceFragmentCompat
 {
     private static final String backStateName = WidgetPreferenceActivity.class.getName();
 
-    private void addWidget(PreferenceScreen screen, int appWidgetId)
+    @NonNull
+    private Preference getWidgetPreference(Context context,
+                                           @NonNull SharedPreferences sp,
+                                           int appWidgetId)
     {
-        Context context = getContext();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-
-        assert context != null;
-
         Preference widget = new Preference(context)
         {
             @Override
@@ -46,7 +40,7 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
                 holder.itemView.setOnLongClickListener(preference -> {
                     new AlertDialog.Builder(context)
                             .setMessage(R.string.activity_remove)
-                            .setPositiveButton(R.string.activity_dialog_yes, (dialogInterface, i) -> {
+                            .setPositiveButton(R.string.activity_dialog_yes, (dialog, i) -> {
                                 WidgetUtil.deleteWidget(context, appWidgetId);
                                 onCreatePreferences(null, null);
                             })
@@ -61,12 +55,11 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
         widget.setIcon(R.drawable.ic_widgets_24dp);
         widget.setTitle(WidgetUtil.getDisplayName(
                 context,
-                Objects.requireNonNull(prefs.getString("name." + appWidgetId, "")),
+                sp.getString("name." + appWidgetId, ""),
                 appWidgetId
         ));
         widget.setSummaryProvider(preference -> WidgetUtil.getDisplayURL(
-                context,
-                Objects.requireNonNull(prefs.getString("url." + appWidgetId, ""))
+                context, sp.getString("url." + appWidgetId, "")
         ));
         widget.setOnPreferenceClickListener(preference -> {
             WidgetPreferenceFragment fragment = new WidgetPreferenceFragment();
@@ -84,7 +77,7 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
             return true;
         });
 
-        screen.addPreference(widget);
+        return widget;
     }
 
     @Override
@@ -97,34 +90,25 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
         // Create new screen
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
 
-        // Add widgets
-        for (int appWidgetId : WidgetUtil.getAppWidgetIds(context)) {
-            this.addWidget(screen, appWidgetId);
-        }
+        // Get shared preferences
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        // Update screen
+        // Add widgets
+        for (int appWidgetId : WidgetUtil.getAppWidgetIds(context))
+            screen.addPreference(getWidgetPreference(context, sp, appWidgetId));
+
+        // Set screen
         setPreferenceScreen(screen);
     }
 
-    @NonNull
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState)
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState)
     {
-        LinearLayout view = (LinearLayout) super.onCreateView(
-                inflater,
-                container,
-                savedInstanceState
-        );
-
-        assert view != null;
-
         Context context = getContext();
         AppCompatActivity activity = (AppCompatActivity) getActivity();
 
-        if (context == null || activity == null)
-            return view;
+        assert context != null;
+        assert activity != null;
 
         // Update title
         activity.setTitle(context.getResources().getString(R.string.activity_widgets));
@@ -139,13 +123,13 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
             widget.setTitle(
                     WidgetUtil.getDisplayName(
                             context,
-                            Objects.requireNonNull(prefs.getString(widgetKey, "")),
+                            prefs.getString(widgetKey, ""),
                             appWidgetId
                     )
             );
         }
 
-        return view;
+        super.onViewCreated(view, savedInstanceState);
     }
 
     @Override

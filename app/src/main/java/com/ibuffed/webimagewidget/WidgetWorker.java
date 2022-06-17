@@ -65,36 +65,33 @@ public class WidgetWorker extends Worker
         );
 
         // Check input data
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID || layoutId == -1) {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID || layoutId == -1)
             return Result.failure();
-        }
 
         // Create remote views
         RemoteViews views = new RemoteViews(context.getPackageName(), layoutId);
 
         // Download image from url
-        if (download(url)) {
+        if (download(url))
             views.setImageViewBitmap(R.id.appwidget_image, bitmap);
-        }
 
         // Create pending intent
         int pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
 
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             pendingIntentFlags |= PendingIntent.FLAG_IMMUTABLE;
-        }
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context,
-                appWidgetId,
-                new Intent(context, WidgetProvider.class)
-                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                        .setAction(WidgetProvider.APPWIDGET_CLICK),
-                pendingIntentFlags
-        );
 
         // Set onClick action
-        views.setOnClickPendingIntent(R.id.appwidget_layout, pendingIntent);
+        views.setOnClickPendingIntent(
+                R.id.appwidget_layout,
+                PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId,
+                        new Intent(context, WidgetProvider.class)
+                                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                                .setAction(WidgetProvider.APPWIDGET_CLICK),
+                        pendingIntentFlags)
+        );
 
         // Update widget
         AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views);
@@ -133,6 +130,7 @@ public class WidgetWorker extends Worker
         Log.i("WidgetWorker", "widget #" + appWidgetId + " " + message);
     }
 
+    @NonNull
     private String getUserAgent()
     {
         Context context = getApplicationContext();

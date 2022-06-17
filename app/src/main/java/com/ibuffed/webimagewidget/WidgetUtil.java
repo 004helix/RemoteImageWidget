@@ -16,6 +16,9 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -40,30 +43,33 @@ public class WidgetUtil
             "aspect", keyType.BOOLEAN
         );
 
-    public static String getDisplayName(Context context, String name, int appWidgetId)
+    @NonNull
+    public static String getDisplayName(Context context, @Nullable String name, int appWidgetId)
     {
-        return name.equals("") ?
-                context.getResources().getString(R.string.settings_default_name) + appWidgetId:
+        return name == null || name.equals("") ?
+                context.getResources().getString(R.string.settings_title_default_name) + appWidgetId:
                 name;
     }
 
-    public static String getDisplayURL(Context context, String url)
+    @NonNull
+    public static String getDisplayURL(Context context, @Nullable String url)
     {
-        return url.equals("") ?
-                context.getResources().getString(R.string.settings_default_url) :
+        return url == null || url.equals("") ?
+                context.getResources().getString(R.string.settings_title_default_url) :
                 url;
     }
 
+    @NonNull
     public static int[] getAppWidgetIds(Context context)
     {
         AppWidgetHost appWidgetHost = new AppWidgetHost(context, 1); // for removing phantoms
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName name = new ComponentName(context, WidgetProvider.class);
         ArrayList<Integer> idList = new ArrayList<>();
 
         for (int appWidgetId : appWidgetManager.getAppWidgetIds(name)) {
-            if (prefs.getBoolean("configured." + appWidgetId, false)) {
+            if (sp.getBoolean("configured." + appWidgetId, false)) {
                 // Save appWidgetId
                 idList.add(appWidgetId);
             } else {
@@ -92,9 +98,8 @@ public class WidgetUtil
         WidgetUpdate.scheduleCancel(context, new WidgetOptions(context, appWidgetId));
 
         // Remove preferences
-        for (String key : widgetPrefs.keySet()) {
+        for (String key : widgetPrefs.keySet())
             edit.remove(key + "." + appWidgetId);
-        }
 
         edit.apply();
     }
