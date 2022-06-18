@@ -19,7 +19,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
 
-public class ActivityDispatcher
+public class WidgetActivity
         extends AppCompatActivity
         implements FragmentManager.OnBackStackChangedListener
 {
@@ -103,21 +103,22 @@ public class ActivityDispatcher
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        super.onCreate(savedInstanceState);
+
         // Perform app update
         WidgetUtil.appUpdate(this);
 
-        // Restore saved state if any
-        super.onCreate(savedInstanceState);
-
         // Apply selected theme
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        theme = prefs.getInt(THEME_KEY, 0);
+        theme = PreferenceManager.getDefaultSharedPreferences(this).getInt(THEME_KEY, 0);
         applyTheme();
 
         // Auto back button
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.addOnBackStackChangedListener(this);
         onBackStackChanged();
+
+        // Set content view
+        setContentView(R.layout.activity_main);
 
         // Check saved instance
         if (savedInstanceState != null)
@@ -129,14 +130,14 @@ public class ActivityDispatcher
                 AppWidgetManager.INVALID_APPWIDGET_ID
         );
 
-        // Dispatch widget preference fragment if appWidgetId is valid
+        // Display widget preference if appWidgetId is valid
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            WidgetPreferenceFragment fragment = new WidgetPreferenceFragment();
+            WidgetPreference fragment = new WidgetPreference();
 
             // Pass appWidgetId to WidgetPreferenceFragment
             Bundle fragmentArguments = new Bundle();
             fragmentArguments.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            fragmentArguments.putBoolean(WidgetPreferenceFragment.INITIAL, true);
+            fragmentArguments.putBoolean(WidgetPreference.INITIAL, true);
             fragment.setArguments(fragmentArguments);
 
             // Make sure we pass back the original appWidgetId
@@ -149,26 +150,12 @@ public class ActivityDispatcher
                     android.R.id.content,
                     fragment
             ).commit();
-
-            return;
-        }
-
-        // Find all configured widgets
-        int[] appWidgetIds = WidgetUtil.getAppWidgetIds(this);
-
-        // Dispatch widget preference activity
-        if (appWidgetIds.length > 0) {
-            // Show WidgetPreferenceActivity
+        } else {
+            // Display widget list
             fragmentManager.beginTransaction().replace(
                     android.R.id.content,
-                    new WidgetPreferenceActivity()
+                    new WidgetList()
             ).commit();
-
-            return;
         }
-
-        // No widgets found
-        setTitle(R.string.activity_widgets);
-        setContentView(R.layout.activity_empty);
     }
 }

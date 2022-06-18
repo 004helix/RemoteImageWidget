@@ -15,7 +15,7 @@ import androidx.annotation.NonNull;
 public class WidgetProvider extends AppWidgetProvider
 {
     final static String EXTRA_TOAST_TEXT = "toastText";
-    final static String APPWIDGET_TOAST = "com.ibuffer.webimagewidget.TOAST";
+    final static String APPWIDGET_TOAST = "com.ibuffed.webimagewidget.TOAST";
     final static String APPWIDGET_CLICK = "com.ibuffed.webimagewidget.CLICK";
 
     @Override
@@ -43,8 +43,6 @@ public class WidgetProvider extends AppWidgetProvider
                 AppWidgetManager.INVALID_APPWIDGET_ID
         );
 
-        //Log.d("WidgetProvider", "action: " + action + ", appWidgetId=" + appWidgetId);
-
         if (action == null || appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID)
             return;
 
@@ -70,7 +68,7 @@ public class WidgetProvider extends AppWidgetProvider
     public void onDeleted(Context context, @NonNull int[] appWidgetIds)
     {
         for (int appWidgetId : appWidgetIds)
-            WidgetUtil.deleteWidget(context, appWidgetId);
+            WidgetUtil.deleteWidget(context, appWidgetId, false);
     }
 
     @Override

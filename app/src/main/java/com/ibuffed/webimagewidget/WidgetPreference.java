@@ -26,10 +26,11 @@ import androidx.preference.PreferenceManager;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreference;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 
-public class WidgetPreferenceFragment
+public class WidgetPreference
         extends PreferenceFragmentCompat
         implements Preference.OnPreferenceChangeListener
 {
@@ -163,6 +164,9 @@ public class WidgetPreferenceFragment
             return;
         }
 
+        activity.setResult(Activity.RESULT_CANCELED, new Intent()
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
+
         // Add "create widget" button
         Button button = new Button(activity);
         button.setText(R.string.activity_create_button);
@@ -177,12 +181,14 @@ public class WidgetPreferenceFragment
         }
         button.setOnClickListener(v -> {
             PreferenceManager
-                    .getDefaultSharedPreferences(activity).edit()
+                    .getDefaultSharedPreferences(context)
+                    .edit()
                     .putBoolean("configured." + appWidgetId, true)
                     .apply();
 
             activity.setResult(Activity.RESULT_OK, new Intent()
                     .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId));
+
             activity.finish();
         });
 
@@ -259,5 +265,18 @@ public class WidgetPreferenceFragment
 
         // Unknown pref
         return false;
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        if (initial)
+            return;
+
+        // Check if widget was deleted
+        if (Arrays.binarySearch(WidgetUtil.getAppWidgetIds(getContext()), appWidgetId) < 0)
+            getParentFragmentManager().popBackStack();
     }
 }

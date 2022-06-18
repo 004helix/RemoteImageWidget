@@ -62,21 +62,14 @@ public class WidgetUtil
     @NonNull
     public static int[] getAppWidgetIds(Context context)
     {
-        AppWidgetHost appWidgetHost = new AppWidgetHost(context, 1); // for removing phantoms
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName name = new ComponentName(context, WidgetProvider.class);
         ArrayList<Integer> idList = new ArrayList<>();
 
-        for (int appWidgetId : appWidgetManager.getAppWidgetIds(name)) {
-            if (sp.getBoolean("configured." + appWidgetId, false)) {
-                // Save appWidgetId
+        for (int appWidgetId : appWidgetManager.getAppWidgetIds(name))
+            if (sp.getBoolean("configured." + appWidgetId, false))
                 idList.add(appWidgetId);
-            } else {
-                // Remove phantom widget
-                appWidgetHost.deleteAppWidgetId(appWidgetId);
-            }
-        }
 
         int[] ids = new int[idList.size()];
         int i = 0;
@@ -89,7 +82,7 @@ public class WidgetUtil
         return ids;
     }
 
-    public static void deleteWidget(Context context, int appWidgetId)
+    public static void deleteWidget(Context context, int appWidgetId, boolean force)
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor edit = prefs.edit();
@@ -102,6 +95,10 @@ public class WidgetUtil
             edit.remove(key + "." + appWidgetId);
 
         edit.apply();
+
+        // Remove it from host
+        if (force)
+            new AppWidgetHost(context, 1).deleteAppWidgetId(appWidgetId);
     }
 
     public static void restoreWidget(Context context, int oldWidgetId, int newWidgetId)

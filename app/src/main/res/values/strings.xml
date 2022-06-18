@@ -37,6 +37,9 @@
     <string name="settings_title_url_description">The URL of the image that will be displayed on the widget</string>
     <string name="settings_title_default_url">http://</string>
     <string name="settings_title_interval">Refresh Interval</string>
+    <string name="settings_title_wifi">Update over WiFi only</string>
+    <string name="settings_title_scale">Scale Image</string>
+    <string name="settings_title_aspect">Preserve Aspect Ratio</string>
     <string-array name="settings_interval_titles">
         <item>Never</item>
         <item>15 minutes</item>
@@ -61,7 +64,4 @@
         <item>720</item>
         <item>1440</item>
     </string-array>
-    <string name="settings_title_wifi">Update over WiFi only</string>
-    <string name="settings_title_scale">Scale Image</string>
-    <string name="settings_title_aspect">Preserve Aspect Ratio</string>
 </resources>

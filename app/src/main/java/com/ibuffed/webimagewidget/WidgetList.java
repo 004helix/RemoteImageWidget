@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -22,9 +23,29 @@ import androidx.preference.PreferenceViewHolder;
 import java.util.Arrays;
 
 
-public class WidgetPreferenceActivity extends PreferenceFragmentCompat
+public class WidgetList extends PreferenceFragmentCompat
 {
-    private static final String backStateName = WidgetPreferenceActivity.class.getName();
+    private static final String backStateName = WidgetList.class.getName();
+
+    private void updateActivity()
+    {
+        Context context = getContext();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+
+        assert context != null;
+        assert activity != null;
+
+        activity.setTitle(context.getResources().getString(R.string.activity_widgets));
+        TextView textView = (TextView) activity.findViewById(R.id.center_text);
+
+        if (textView == null)
+            return;
+
+        textView.setText(
+                getPreferenceScreen().getPreferenceCount() > 0 ? "" :
+                        context.getResources().getText(R.string.no_widgets)
+        );
+    }
 
     @NonNull
     private Preference getWidgetPreference(Context context,
@@ -41,8 +62,9 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
                     new AlertDialog.Builder(context)
                             .setMessage(R.string.activity_remove)
                             .setPositiveButton(R.string.activity_dialog_yes, (dialog, i) -> {
-                                WidgetUtil.deleteWidget(context, appWidgetId);
+                                WidgetUtil.deleteWidget(context, appWidgetId, true);
                                 onCreatePreferences(null, null);
+                                updateActivity();
                             })
                             .setNegativeButton(R.string.activity_dialog_no, null)
                             .show();
@@ -62,7 +84,7 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
                 context, sp.getString("url." + appWidgetId, "")
         ));
         widget.setOnPreferenceClickListener(preference -> {
-            WidgetPreferenceFragment fragment = new WidgetPreferenceFragment();
+            WidgetPreference fragment = new WidgetPreference();
             Bundle fragmentArguments = new Bundle();
             fragmentArguments.putInt(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
             fragment.setArguments(fragmentArguments);
@@ -84,8 +106,10 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey)
     {
         Context context = getContext();
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
 
         assert context != null;
+        assert activity != null;
 
         // Create new screen
         PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(context);
@@ -110,11 +134,8 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
         assert context != null;
         assert activity != null;
 
-        // Update title
-        activity.setTitle(context.getResources().getString(R.string.activity_widgets));
-
         // Update widget titles
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         PreferenceScreen screen = getPreferenceScreen();
         for (int i = 0; i < screen.getPreferenceCount(); i++) {
             Preference widget = screen.getPreference(i);
@@ -123,19 +144,22 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
             widget.setTitle(
                     WidgetUtil.getDisplayName(
                             context,
-                            prefs.getString(widgetKey, ""),
+                            sp.getString(widgetKey, ""),
                             appWidgetId
                     )
             );
         }
 
+        // Update activity
+        updateActivity();
+
         super.onViewCreated(view, savedInstanceState);
     }
 
     @Override
-    public void onStart()
+    public void onResume()
     {
-        super.onStart();
+        super.onResume();
 
         // Check widgets was added and/or deleted
         PreferenceScreen screen = getPreferenceScreen();
@@ -149,7 +173,9 @@ public class WidgetPreferenceActivity extends PreferenceFragmentCompat
 
         Arrays.sort(ids);
 
-        if (!Arrays.equals(ids, WidgetUtil.getAppWidgetIds(getContext())))
+        if (!Arrays.equals(ids, WidgetUtil.getAppWidgetIds(getContext()))) {
             onCreatePreferences(null, null);
+            updateActivity();
+        }
     }
 }

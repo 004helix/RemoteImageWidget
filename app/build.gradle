@@ -9,9 +9,8 @@ android {
         //       remove all "noinspection" comments
         //noinspection OldTargetApi
         targetSdkVersion 30
-        versionCode 12
+        versionCode 13
         versionName '2.3'
-        multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
