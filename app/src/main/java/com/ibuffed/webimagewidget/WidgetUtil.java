@@ -4,15 +4,11 @@
 package com.ibuffed.webimagewidget;
 
 import android.annotation.SuppressLint;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -133,45 +129,8 @@ public class WidgetUtil
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         int oldVersion = prefs.getInt(VERSION_KEY, 0);
 
-        //oldVersion = 2;
         if (oldVersion >= BuildConfig.VERSION_CODE)
             return;
-
-        AlarmManager alarmManager =
-                (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-
-        for (int appWidgetId : getAppWidgetIds(context)) {
-            // TODO: remove this check (for 1.1 version)
-            if (oldVersion <= 2) {
-                alarmManager.cancel(
-                        PendingIntent.getBroadcast(
-                                context,
-                                0,
-                                new Intent(context, WidgetProvider.class)
-                                        .setAction("appWidgetAlarm." + appWidgetId),
-                                // TODO: flag = 0 prevents me to update targetSdkVersion > 30
-                                0
-                        )
-                );
-            }
-
-            int flags = 0;
-
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                flags |= PendingIntent.FLAG_IMMUTABLE;
-            }
-
-            alarmManager.cancel(
-                    PendingIntent.getBroadcast(
-                            context,
-                            appWidgetId,
-                            new Intent(context, WidgetProvider.class)
-                                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                                    .setAction("com.ibuffed.webimagewidget.ALARM"),
-                            flags
-                    )
-            );
-        }
 
         prefs.edit().putInt(VERSION_KEY, BuildConfig.VERSION_CODE).apply();
 
