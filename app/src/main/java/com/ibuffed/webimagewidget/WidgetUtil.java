@@ -42,7 +42,7 @@ public class WidgetUtil
     @NonNull
     public static String getDisplayName(Context context, @Nullable String name, int appWidgetId)
     {
-        return name == null || name.equals("") ?
+        return name == null || name.isEmpty() ?
                 context.getResources().getString(R.string.settings_title_default_name) + appWidgetId:
                 name;
     }
@@ -50,7 +50,7 @@ public class WidgetUtil
     @NonNull
     public static String getDisplayURL(Context context, @Nullable String url)
     {
-        return url == null || url.equals("") ?
+        return url == null || url.isEmpty() ?
                 context.getResources().getString(R.string.settings_title_default_url) :
                 url;
     }

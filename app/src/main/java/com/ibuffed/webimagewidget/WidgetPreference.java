@@ -8,7 +8,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -17,7 +16,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -170,15 +168,9 @@ public class WidgetPreference
         // Add "create widget" button
         Button button = new Button(activity);
         button.setText(R.string.activity_create_button);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            button.setBackgroundTintList(
-                    AppCompatResources.getColorStateList(context, R.color.colorPrimaryDark)
-            );
-        } else {
-            button.setBackgroundColor(
-                    context.getResources().getColor(R.color.colorPrimaryDark)
-            );
-        }
+        button.setBackgroundColor(
+                context.getResources().getColor(R.color.colorPrimaryDark)
+        );
         button.setOnClickListener(v -> {
             PreferenceManager
                     .getDefaultSharedPreferences(context)

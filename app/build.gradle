@@ -4,11 +4,10 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId 'com.ibuffed.webimagewidget'
-        minSdkVersion 18
-        //noinspection OldTargetApi
-        targetSdkVersion 33
-        versionCode 15
-        versionName '2.4'
+        minSdkVersion 21
+        targetSdk 34
+        versionCode 16
+        versionName '2.5'
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {
@@ -20,16 +19,16 @@ android {
     productFlavors {
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_9
-        targetCompatibility JavaVersion.VERSION_1_9
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'com.ibuffed.webimagewidget'
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.work:work-runtime:2.9.0'
+    implementation 'androidx.work:work-runtime:2.9.1'
 }
